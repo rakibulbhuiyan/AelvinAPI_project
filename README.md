@@ -1,2 +1,2 @@
 # AelvinAPI_project
-create Api for like social media
+create Api as like social media
