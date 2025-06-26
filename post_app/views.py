@@ -1,7 +1,8 @@
+from datetime import date, timezone
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404    
-from .models import Post, Comment
-from .serializers import PostSerializer, CommentSerializer
+from .models import Post, Comment, Category
+from .serializers import PostSerializer, CommentSerializer, CategorySerializer
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
@@ -95,4 +96,41 @@ class CommentDetailView(APIView):
         
 
 
+class CategoryListCreateView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
+    def get(self,request):
+        categories = Category.objects.all().order_by('-created_at')
+        serializer = CategorySerializer(categories, many=True, context={'request':request})
+        return Response(serializer.data)
+    
+    def post(self,request):
+        serializer = CategorySerializer(data=request.data, context={'request':request})
+        if serializer.is_valid():
+            category = serializer.save()
+            serializer = CategorySerializer(category, context = {'request':request})
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors , status=status.HTTP_400_BAD_REQUEST)
+
+
+class CategoryFollowToggleView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def post(self,request,category_id):
+        category = Category.objects.get(id=category_id)
+        user = request.user
+        if user in category.followers.all():
+            category.followers.remove(user)
+            return Response({'message': 'Unfollowed'}, status=status.HTTP_200_OK)
+        else:
+            category.followers.add(user)
+            return Response({'message': 'Followed'}, status=status.HTTP_200_OK)
+
+
+class LatestPostListView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get(self, request):
+        posts = Post.objects.all().order_by('-created_at')[:3]
+        serializer = PostSerializer(posts, many=True)
+        return Response(serializer.data)
