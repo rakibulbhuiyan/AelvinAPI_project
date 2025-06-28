@@ -1,14 +1,62 @@
-from datetime import date, timezone
-from django.http import HttpResponse
+from rest_framework.generics import ListAPIView
+
 from django.shortcuts import get_object_or_404    
-from .models import Post, Comment, Category
-from .serializers import PostSerializer, CommentSerializer, CategorySerializer
+from .models import Post, Comment, Category, Discussion
+from .serializers import PostSerializer, CommentSerializer, CategorySerializer, SearchSerializer, DiscussionSerializer
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework import status
 
 # Create your views here.
+
+
+class DiscussionView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get(self, request):
+        discussions = Discussion.objects.all().order_by('-created_at')
+        serializer = DiscussionSerializer(discussions, many=True)
+
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = DiscussionSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            # print(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DiscussionDetailView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_object(self, pk):
+        return get_object_or_404(Discussion, pk=pk)
+
+    def get(self, request, pk):
+        discussion = self.get_object(pk)
+        serializer = DiscussionSerializer(discussion)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        discussion = self.get_object(pk)
+        if discussion.user != request.user:
+            return Response({'error': 'You do not have permission to edit this discussion.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = DiscussionSerializer(discussion, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        discussion = self.get_object(pk)
+        if discussion.user != request.user:
+            return Response({'error': 'You do not have permission to delete this discussion.'}, status=status.HTTP_403_FORBIDDEN)
+        discussion.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class PostListView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -134,3 +182,14 @@ class LatestPostListView(APIView):
         posts = Post.objects.all().order_by('-created_at')[:3]
         serializer = PostSerializer(posts, many=True)
         return Response(serializer.data)
+
+from rest_framework import filters
+
+class SearchView(ListAPIView):
+    queryset = Post.objects.all().order_by('-created_at')
+    serializer_class = SearchSerializer
+    filter_backends = [filters.SearchFilter,filters.OrderingFilter]
+    search_fields = ['category__title', 'title', 'description']
+    ordering_fields = ['created_at', 'like', 'dislike', 'share']
+    ordering = ['-created_at']
+

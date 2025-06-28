@@ -4,6 +4,9 @@ from django.conf import settings
 User = settings.AUTH_USER_MODEL
 
 class Post(models.Model):
+
+    category = models.ForeignKey('Category', related_name='posts', on_delete=models.CASCADE, null=True, blank=True)
+
     title = models.CharField(max_length=255)
     description = models.TextField()
     image = models.ImageField(upload_to='posts/', null=True, blank=True)
@@ -16,7 +19,6 @@ class Post(models.Model):
 
     def __str__(self):
         return self.title
-
 
 
 class Comment(models.Model):
@@ -41,3 +43,12 @@ class Category(models.Model):
         return self.followers.count()
 
 
+class Discussion(models.Model):
+    user = models.ForeignKey(User, related_name='discussions', on_delete=models.CASCADE)
+    group_name = models.CharField(max_length=255)
+    description = models.TextField()
+    topic = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'Discussion by {self.user.email} or {self.user}'

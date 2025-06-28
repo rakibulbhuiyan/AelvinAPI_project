@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import (PostListView,PostDetailView,CommentListView,CommentDetailView,
-                    CategoryListCreateView, CategoryFollowToggleView,LatestPostListView)
+                    CategoryListCreateView, CategoryFollowToggleView,LatestPostListView,SearchView,DiscussionView,DiscussionDetailView)
 
 urlpatterns = [
     path('posts/', PostListView.as_view(), name='post-list-create'),
@@ -14,5 +14,10 @@ urlpatterns = [
 
 
     path('latest-posts/', LatestPostListView.as_view(), name='latest-posts'),
+    path('posts/fullsearch/', SearchView.as_view(), name='full-search'),
+
+    # Discussion 
+    path('discussions/', DiscussionView.as_view(), name='discussion-list-create'),
+    path('discussions/<int:pk>/', DiscussionDetailView.as_view(), name='discussion-detail')
 
 ]
