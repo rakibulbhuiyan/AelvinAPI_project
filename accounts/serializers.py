@@ -1,11 +1,19 @@
-from .models import User,Profile
+from .models import User,Profile, AccountDeleteLog
 from rest_framework import serializers
+from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate
+
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source='user.email', read_only=True)
+
     class Meta:
         model = Profile
-        fields = ['bio', 'profile_picture', 'location', 'website']
+        fields = [
+            'email', 'display_name', 'bio', 'profile_picture', 'banner', 'location',
+            'website', 'language', 'gender', 'google_connected', 'apple_connected'
+        ]
 
 
 class SignupSerializer(serializers.ModelSerializer):
@@ -18,7 +26,6 @@ class SignupSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
 
-from django.contrib.auth import get_user_model
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -43,3 +50,18 @@ class LoginSerializer(serializers.Serializer):
 
         data['user'] = user
         return data
+
+class AccountDeleteSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField(write_only=True)
+    reason = serializers.CharField(required=False, allow_blank=True)
+
+    def validate(self, data):
+        user = authenticate(username=data['username'], password=data['password'])
+        if not user:
+            raise serializers.ValidationError("Invalid username or password")
+        data['user'] = user
+        return data
+    
+
+

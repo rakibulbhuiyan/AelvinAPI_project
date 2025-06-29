@@ -3,10 +3,33 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
-from .serializers import LoginSerializer, SignupSerializer, ProfileSerializer
-from .models import User, Profile
+from .serializers import LoginSerializer, SignupSerializer, ProfileSerializer, AccountDeleteSerializer
+from .models import User, Profile, AccountDeleteLog
 
 
+
+class AccountDeleteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = AccountDeleteSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.validated_data['user']
+            reason = serializer.validated_data.get('reason', '')
+
+            # Save to delete log
+            AccountDeleteLog.objects.create(user=user, reason=reason)
+
+            user.delete()
+            return Response({
+                "success": True,
+                "message": "Account deleted successfully"
+            }, status=200)
+
+        return Response({
+            "success": False,
+            "errors": serializer.errors
+        }, status=400)
 
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
@@ -31,17 +54,16 @@ class ProfileView(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-     
+
 
 class SignupAPIView(APIView):
-     def post(self, request):
-          serializer = SignupSerializer(data=request.data)
-          serializer.is_valid(raise_exception=True)
-          serializer.save()
-          data = serializer.data
-          response = status.HTTP_201_CREATED
-    
-          return Response(data, status=response)
+    def post(self, request):
+        serializer = SignupSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()  # Save the user
+        # Re-serialize to return accurate data (without password)
+        response_data = SignupSerializer(user).data
+        return Response(response_data, status=status.HTTP_201_CREATED)
      
 class LoginView(APIView):
     

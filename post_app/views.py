@@ -1,13 +1,12 @@
 from rest_framework.generics import ListAPIView
 
 from django.shortcuts import get_object_or_404    
-from .models import Post, Comment, Category, Discussion
-from .serializers import PostSerializer, CommentSerializer, CategorySerializer, SearchSerializer, DiscussionSerializer
+from .models import Post, Comment, Category, Discussion, Report
+from .serializers import PostSerializer, CommentSerializer, CategorySerializer, SearchSerializer, DiscussionSerializer, ReportSerializer
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
-from rest_framework import status
-
+from rest_framework import status, filters
 # Create your views here.
 
 
@@ -143,7 +142,6 @@ class CommentDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
         
 
-
 class CategoryListCreateView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
@@ -183,8 +181,6 @@ class LatestPostListView(APIView):
         serializer = PostSerializer(posts, many=True)
         return Response(serializer.data)
 
-from rest_framework import filters
-
 class SearchView(ListAPIView):
     queryset = Post.objects.all().order_by('-created_at')
     serializer_class = SearchSerializer
@@ -193,3 +189,28 @@ class SearchView(ListAPIView):
     ordering_fields = ['created_at', 'like', 'dislike', 'share']
     ordering = ['-created_at']
 
+class ReportView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def post(self,request,post_id):
+        post = Post.objects.get(id=post_id)
+        user= request.user
+        if Report.objects.filter(post=post, user=user).exists():
+            return Response({'error': 'You have already submitted a report for this post.'}, status=status.HTTP_400_BAD_REQUEST)
+        data= request.data.copy()
+        data['user'] = user.id
+        serializer = ReportSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save(user=user, post=post)
+            response_data = {
+                "success": True,
+                "message": "Report submitted successfully",
+                "data": serializer.data
+            }
+            return Response(response_data, status=status.HTTP_201_CREATED)
+        response_data={
+            "success": False,
+            "message": "Failed to submit report",
+            "errors": serializer.errors
+        }
+        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)

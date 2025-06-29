@@ -3,6 +3,7 @@ from django.conf import settings
 
 User = settings.AUTH_USER_MODEL
 
+
 class Post(models.Model):
 
     category = models.ForeignKey('Category', related_name='posts', on_delete=models.CASCADE, null=True, blank=True)
@@ -52,3 +53,25 @@ class Discussion(models.Model):
 
     def __str__(self):
         return f'Discussion by {self.user.email} or {self.user}'
+    
+
+
+GENDER_CHOICES = (
+    ('Male', 'Male'),
+    ('Female', 'Female'),
+    ('Other', 'Other'),
+)
+
+class Report(models.Model):
+    
+    user = models.ForeignKey(User, related_name='reports', on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, related_name='reports', on_delete=models.CASCADE)
+    submit_a_report = models.JSONField(default=list, blank=True, null=True)
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['user', 'post']  # One report per post per user
+
+    def __str__(self):
+        return f"{self.user.username} reported on {self.post.title}"

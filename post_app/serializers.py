@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Post, Comment, Category, Discussion
+from .models import Post, Comment, Category, Discussion, Report
 
 
 class DiscussionSerializer(serializers.ModelSerializer):
@@ -33,7 +33,6 @@ class PostSerializer(serializers.ModelSerializer):
         return Post.objects.create(**validate_data)
 
 
-
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
@@ -53,7 +52,6 @@ class CategorySerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         return user.is_authenticated and obj.followers.filter(id=user.id).exists()
 
-
 class SearchSerializer(serializers.Serializer):
     category_name = serializers.CharField(source='category__title', required=False)
 
@@ -61,3 +59,11 @@ class SearchSerializer(serializers.Serializer):
         model = Post
         fields = ['category_name']  
         read_only_fields = ('id', 'created_at', 'like', 'dislike', 'share')
+
+class ReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Report
+        fields = ['id', 'post', 'submit_a_report', 'gender', 'created_at']
+        read_only_fields = ['user', 'post', 'created_at'] 
+
+
