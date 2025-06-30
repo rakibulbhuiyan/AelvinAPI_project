@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (PostListView,PostDetailView,CommentListView,CommentDetailView,
                     CategoryListCreateView, CategoryFollowToggleView,LatestPostListView,SearchView,
-                    DiscussionView,DiscussionDetailView, ReportView)
+                    DiscussionView,DiscussionDetailView, ReportView, SubcategoryAPIView, SubCategoryDetailAPIView)
 
 urlpatterns = [
     path('posts/', PostListView.as_view(), name='post-list-create'),
@@ -12,6 +12,9 @@ urlpatterns = [
 
     path('categories/', CategoryListCreateView.as_view(), name='category-list-create'),
     path('categories/<int:category_id>/follow/', CategoryFollowToggleView.as_view(), name='category-follow-toggle'),
+
+    path('subcategories/', SubcategoryAPIView.as_view(), name='subcategory-list-create'),
+    path('subcategories/<int:pk>/', SubCategoryDetailAPIView.as_view(), name='subcategory-detail'),
 
 
     path('latest-posts/', LatestPostListView.as_view(), name='latest-posts'),

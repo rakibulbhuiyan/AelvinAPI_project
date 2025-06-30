@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Post, Comment, Category, Discussion, Report
+from .models import Post, Comment, Category, Discussion, Report, Subcategory
 
 
 class DiscussionSerializer(serializers.ModelSerializer):
@@ -66,4 +66,7 @@ class ReportSerializer(serializers.ModelSerializer):
         fields = ['id', 'post', 'submit_a_report', 'gender', 'created_at']
         read_only_fields = ['user', 'post', 'created_at'] 
 
-
+class SubcategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subcategory
+        fields = ['id', 'category', 'title', 'description','image', 'created_at']

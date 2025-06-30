@@ -43,6 +43,15 @@ class Category(models.Model):
     def total_followers(self):
         return self.followers.count()
 
+class Subcategory(models.Model):
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='subcategories')
+    title = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    image = models.ImageField(upload_to='subcategory_images/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.category.title} → {self.title}"
 
 class Discussion(models.Model):
     user = models.ForeignKey(User, related_name='discussions', on_delete=models.CASCADE)
@@ -54,7 +63,6 @@ class Discussion(models.Model):
     def __str__(self):
         return f'Discussion by {self.user.email} or {self.user}'
     
-
 
 GENDER_CHOICES = (
     ('Male', 'Male'),

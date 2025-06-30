@@ -1,8 +1,9 @@
 from rest_framework.generics import ListAPIView
 
 from django.shortcuts import get_object_or_404    
-from .models import Post, Comment, Category, Discussion, Report
-from .serializers import PostSerializer, CommentSerializer, CategorySerializer, SearchSerializer, DiscussionSerializer, ReportSerializer
+from .models import Post, Comment, Category, Discussion, Report, Subcategory
+from .serializers import (PostSerializer, CommentSerializer, CategorySerializer, SearchSerializer, DiscussionSerializer, ReportSerializer,
+                          SubcategorySerializer)
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
@@ -214,3 +215,74 @@ class ReportView(APIView):
             "errors": serializer.errors
         }
         return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+    
+class SubcategoryAPIView(APIView):
+    def get(self,request):
+        subcategories = Subcategory.objects.all()
+        serializer = SubcategorySerializer(subcategories, many=True)
+        return Response(serializer.data)
+    def post(self,request):
+        serializer = SubcategorySerializer(data = request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# Retrieve, Update, Delete
+class SubCategoryDetailAPIView(APIView):
+
+    def get_objects(self,pk):
+        return Subcategory.objects.get(pk=pk)
+    
+    def get(self,request,pk):
+        subcategories = self.get_objects(pk)
+        serializer = SubcategorySerializer(subcategories)
+        return Response(serializer.data)
+    
+    def put(self,request,pk):
+        subcategories = self.get_objects(pk)
+        serializer = SubcategorySerializer(subcategories, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self,request,pk):
+        subcategories = self.get_objects(pk)
+        subcategories.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

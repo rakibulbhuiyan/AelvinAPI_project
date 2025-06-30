@@ -3,7 +3,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
-from .serializers import LoginSerializer, SignupSerializer, ProfileSerializer, AccountDeleteSerializer
+from .serializers import (LoginSerializer, SignupSerializer, ProfileSerializer, AccountDeleteSerializer,
+                          PasswordResetRequestSerializer, OTPVerificationSerializer, PasswordResetSerializer)
 from .models import User, Profile, AccountDeleteLog
 
 
@@ -83,3 +84,72 @@ class LoginView(APIView):
             'access': str(refresh.access_token),
             'user': serializer.data
         }, status=status.HTTP_200_OK)
+     
+class PasswordResetRequestAPIView(APIView):
+    permission_classes=[]
+    def post(self,request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            return Response(
+                {"success": True, "message": "OTP sent to email."}, 
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            {"success": False, "errors": serializer.errors}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+class OTPVerificarionAPIView(APIView):
+    permission_classes = []
+    def post(self,request):
+        serializer = OTPVerificationSerializer(data=request.data)
+        if serializer.is_valid():
+             return Response(
+                {"success": True, "message": "OTP verified successfully."},
+                status=status.HTTP_200_OK,
+            )
+        return Response(
+            {"success": False, "errors": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    
+class PasswordResetAPIView(APIView):
+    permission_class = []
+
+    def post(self,request):
+        serializer = PasswordResetSerializer(data = request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"success": True, "message": "Password reset successfully."},
+                status=status.HTTP_200_OK,
+            )
+        return Response(
+            {"success": False, "errors": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

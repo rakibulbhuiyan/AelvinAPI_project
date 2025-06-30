@@ -1,3 +1,5 @@
+from datetime import timedelta
+import random
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
 from django.utils import timezone
@@ -14,6 +16,19 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(default=timezone.now)
+
+
+    # forget password
+    otp = models.CharField(max_length=6, blank=True, null=True)
+    otp_exp = models.DateTimeField(blank=True, null=True) 
+    otp_verified = models.BooleanField(default=False)
+
+    def generate_otp(self):
+        self.otp = str(random.randint(100000, 999999))  # Generate 6-digit OTP
+        self.otp_exp = timezone.now() + timedelta(minutes=10)
+        self.otp_verified = False
+        self.save()
+
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ['first_name', 'last_name']
