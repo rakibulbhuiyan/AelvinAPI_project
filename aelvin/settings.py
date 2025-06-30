@@ -35,7 +35,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
+ 
     'django.contrib.sites',  # Required for allauth
     'rest_framework',
     'rest_framework.authtoken',
@@ -48,6 +48,9 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'dj_rest_auth',
     'dj_rest_auth.registration',
+
+
+    'social_django',
     'accounts',
     'post_app',
 ]
@@ -62,6 +65,7 @@ ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 
 MIDDLEWARE = [
+    'allauth.account.middleware.AccountMiddleware', # Required for allauth
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -69,8 +73,31 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'social_django.middleware.SocialAuthExceptionMiddleware',
+    
+]
 
-    'allauth.account.middleware.AccountMiddleware', # Required for allauth
+# https://console.developers.google.com/
+
+# Provider specific settings
+# SOCIALACCOUNT_PROVIDERS = {
+#     'google': {
+#         # For each OAuth based provider, either add a ``SocialApp``
+#         # (``socialaccount`` app) containing the required client
+#         # credentials, or list them here:
+#         'APP': {
+#             'client_id': '123',
+#             'secret': '456',
+#             'key': ''
+#         }
+#     }
+# }
+
+SOCIAL_AUTH_FACEBOOK_KEY = 'your_app_id'
+SOCIAL_AUTH_FACEBOOK_SECRET = 'your_app_secret'
+
+SOCIAL_AUTH_FACEBOOK_SCOPE = [
+    'email',
 ]
 
 ROOT_URLCONF = 'aelvin.urls'
@@ -85,6 +112,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'social_django.context_processors.backends',
+
             ],
         },
     },
@@ -92,18 +121,28 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'aelvin.wsgi.application'
 
+AUTHENTICATION_BACKENDS = [
+    'social_core.backends.facebook.FacebookOAuth2', # for facebook
+    # Needed to login by username in Django admin, regardless of `allauth`
+    'django.contrib.auth.backends.ModelBackend',
 
-
+    # `allauth` specific authentication methods, such as login by email
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'rockyhasan.bspi@gmail.com'
-EMAIL_HOST_PASSWORD = 'yourapp_password'
+EMAIL_HOST_PASSWORD = 'lhtk xszw vqnh zukx'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
-
+LOGIN_URL = 'login'
+LOGOUT_URL = 'logout'
+LOGIN_REDIRECT_URL = 'profile'
+LOGOUT_REDIRECT_URL = 'login'
 
 
 # Database

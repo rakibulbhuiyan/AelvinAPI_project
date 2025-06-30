@@ -3,34 +3,32 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
-from .serializers import (LoginSerializer, SignupSerializer, ProfileSerializer, AccountDeleteSerializer,
+
+from aelvin import settings
+from .serializers import (LoginSerializer, SignupSerializer, ProfileSerializer, OTPVerifyLoginSerializer,
                           PasswordResetRequestSerializer, OTPVerificationSerializer, PasswordResetSerializer)
 from .models import User, Profile, AccountDeleteLog
-
-
+from django.core.mail import send_mail
 
 class AccountDeleteView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        serializer = AccountDeleteSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.validated_data['user']
-            reason = serializer.validated_data.get('reason', '')
+        reason = request.data.get('reason', '')
 
-            # Save to delete log
-            AccountDeleteLog.objects.create(user=user, reason=reason)
+        # Save delete reason in log
+        AccountDeleteLog.objects.create(
+            user=request.user,
+            reason=reason
+        )
 
-            user.delete()
-            return Response({
-                "success": True,
-                "message": "Account deleted successfully"
-            }, status=200)
+        # Delete the user
+        request.user.delete()
 
         return Response({
-            "success": False,
-            "errors": serializer.errors
-        }, status=400)
+            "success": True,
+            "message": "Account deleted successfully"
+        }, status=status.HTTP_200_OK)
 
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
@@ -56,7 +54,6 @@ class ProfileView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 class SignupAPIView(APIView):
     def post(self, request):
         serializer = SignupSerializer(data=request.data)
@@ -65,17 +62,45 @@ class SignupAPIView(APIView):
         # Re-serialize to return accurate data (without password)
         response_data = SignupSerializer(user).data
         return Response(response_data, status=status.HTTP_201_CREATED)
-     
-class LoginView(APIView):
-    
-     def post(self, request):
+
+
+class LoginSendOTPView(APIView):
+    def post(self,request):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        user=serializer.validated_data['user']
 
-        user = serializer.validated_data['user'] 
+        if not user.is_active:
+            user.generate_otp()
 
+            send_mail(
+                subject="Your OTP Code",
+                message=f"Your OTP is {user.otp}. It will expire in 10 minutes.",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+            return Response({
+                "success": True,
+                "message": "OTP sent to your email. Please verify to login."
+            }, status=status.HTTP_200_OK)
         refresh = RefreshToken.for_user(user)
-
+        return Response({
+            'success': True,
+            'message': 'Login successful',
+            'status_code': '200',
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            # 'user': serializer.data
+        }, status=status.HTTP_200_OK)
+        
+    
+class OTPVerifyingLoginView(APIView):
+    def post(self,request):
+        serializer = OTPVerifyLoginSerializer(data= request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        refresh = RefreshToken.for_user(user)
         return Response({
             'success': True,
             'message': 'Login successful',
@@ -84,6 +109,26 @@ class LoginView(APIView):
             'access': str(refresh.access_token),
             'user': serializer.data
         }, status=status.HTTP_200_OK)
+
+
+# class LoginView(APIView):
+    
+#      def post(self, request):
+#         serializer = LoginSerializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+
+#         user = serializer.validated_data['user'] 
+
+#         refresh = RefreshToken.for_user(user)
+
+#         return Response({
+#             'success': True,
+#             'message': 'Login successful',
+#             'status_code': '200',
+#             'refresh': str(refresh),
+#             'access': str(refresh.access_token),
+#             'user': serializer.data
+#         }, status=status.HTTP_200_OK)
      
 class PasswordResetRequestAPIView(APIView):
     permission_classes=[]
@@ -98,6 +143,7 @@ class PasswordResetRequestAPIView(APIView):
             {"success": False, "errors": serializer.errors}, 
             status=status.HTTP_400_BAD_REQUEST
         )
+
 class OTPVerificarionAPIView(APIView):
     permission_classes = []
     def post(self,request):

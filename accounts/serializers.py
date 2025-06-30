@@ -1,3 +1,4 @@
+from django.utils import timezone
 from .models import User,Profile
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
@@ -26,6 +27,32 @@ class SignupSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
 
+class OTPVerifyLoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=6)
+
+    def validate(self, data):
+        email = data.get("email")
+        otp = data.get("otp")
+
+        User = get_user_model()
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Invalid email")
+
+        if user.otp != otp:
+            raise serializers.ValidationError("Invalid OTP")
+
+        if user.otp_exp < timezone.now():
+            raise serializers.ValidationError("OTP expired")
+
+        user.otp_verified = True
+        user.save()
+        data['user'] = user
+        return data
+
+
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
@@ -50,17 +77,17 @@ class LoginSerializer(serializers.Serializer):
         data['user'] = user
         return data
 
-class AccountDeleteSerializer(serializers.Serializer):
-    username = serializers.CharField()
-    password = serializers.CharField(write_only=True)
-    reason = serializers.CharField(required=False, allow_blank=True)
+# class AccountDeleteSerializer(serializers.Serializer):
+#     username = serializers.CharField()
+#     password = serializers.CharField(write_only=True)
+#     reason = serializers.CharField(required=False, allow_blank=True)
 
-    def validate(self, data):
-        user = authenticate(username=data['username'], password=data['password'])
-        if not user:
-            raise serializers.ValidationError("Invalid username or password")
-        data['user'] = user
-        return data
+#     def validate(self, data):
+#         user = authenticate(username=data['username'], password=data['password'])
+#         if not user:
+#             raise serializers.ValidationError("Invalid username or password")
+#         data['user'] = user
+#         return data
     
 
 class PasswordResetRequestSerializer(serializers.Serializer):
