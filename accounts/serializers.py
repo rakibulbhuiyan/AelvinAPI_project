@@ -77,17 +77,17 @@ class LoginSerializer(serializers.Serializer):
         data['user'] = user
         return data
 
-# class AccountDeleteSerializer(serializers.Serializer):
-#     username = serializers.CharField()
-#     password = serializers.CharField(write_only=True)
-#     reason = serializers.CharField(required=False, allow_blank=True)
+class AccountDeleteSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField(write_only=True)
+    reason = serializers.CharField(required=False, allow_blank=True)
 
-#     def validate(self, data):
-#         user = authenticate(username=data['username'], password=data['password'])
-#         if not user:
-#             raise serializers.ValidationError("Invalid username or password")
-#         data['user'] = user
-#         return data
+    def validate(self, data):
+        user = authenticate(username=data['username'], password=data['password'])
+        if not user:
+            raise serializers.ValidationError("Invalid username or password")
+        data['user'] = user
+        return data
     
 
 class PasswordResetRequestSerializer(serializers.Serializer):

@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',  # Google Login
+    'allauth.socialaccount.providers.facebook',
      
 
     'rest_framework_simplejwt.token_blacklist',
@@ -77,24 +78,43 @@ MIDDLEWARE = [
     
 ]
 
+
+# SOCIALACCOUNT_PROVIDERS = {
+#     'facebook': {
+#         'METHOD': 'oauth2',
+#         'SCOPE': ['email', 'public_profile'],
+#         'FIELDS': [
+#             'id', 'email', 'name', 'first_name', 'last_name',
+#         ],
+#         'VERIFIED_EMAIL': False,
+#         'VERSION': 'v19.0',  # Use current Graph API version
+#     }
+# }
+from dotenv import load_dotenv
+load_dotenv()
+
+import os
+
 # https://console.developers.google.com/
 
 # Provider specific settings
-# SOCIALACCOUNT_PROVIDERS = {
-#     'google': {
-#         # For each OAuth based provider, either add a ``SocialApp``
-#         # (``socialaccount`` app) containing the required client
-#         # credentials, or list them here:
-#         'APP': {
-#             'client_id': '123',
-#             'secret': '456',
-#             'key': ''
-#         }
-#     }
-# }
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        # For each OAuth based provider, either add a ``SocialApp``
+        # (``socialaccount`` app) containing the required client
+        # credentials, or list them here:
+        'APP': {
+            'client_id': os.getenv("GOOGLE_CLIENT_ID"),
+            'secret': os.getenv("GOOGLE_SECRET"),
+            'key': ''
+        },
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+    }
+}
 
-SOCIAL_AUTH_FACEBOOK_KEY = 'your_app_id'
-SOCIAL_AUTH_FACEBOOK_SECRET = 'your_app_secret'
+# SOCIAL_AUTH_FACEBOOK_KEY = 'your_app_id'
+# SOCIAL_AUTH_FACEBOOK_SECRET = 'your_app_secret'
 
 SOCIAL_AUTH_FACEBOOK_SCOPE = [
     'email',
@@ -122,7 +142,8 @@ TEMPLATES = [
 WSGI_APPLICATION = 'aelvin.wsgi.application'
 
 AUTHENTICATION_BACKENDS = [
-    'social_core.backends.facebook.FacebookOAuth2', # for facebook
+    # 'social_core.backends.facebook.FacebookOAuth2', # for facebook
+    # 'social_core.backends.google.GoogleOAuth2', # for Google
     # Needed to login by username in Django admin, regardless of `allauth`
     'django.contrib.auth.backends.ModelBackend',
 
@@ -154,6 +175,7 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.SessionAuthentication',  # For browsable API

@@ -11,4 +11,7 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
     path('api/', include('post_app.urls')), 
     path('auth/', include('social_django.urls', namespace='social')),
-]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+    path('auth/google/', include('allauth.socialaccount.providers.google.urls')),
+
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
